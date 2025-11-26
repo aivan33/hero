@@ -1,0 +1,179 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Poker Scenario Config Schema",
+  "description": "Schema for defining poker scenarios in educational content",
+  "type": "object",
+  "required": ["board", "hero", "villain", "pot", "rangeMatrix"],
+  "properties": {
+    "board": {
+      "type": "object",
+      "description": "Community cards on the board",
+      "required": ["street"],
+      "properties": {
+        "street": {
+          "type": "string",
+          "enum": ["preflop", "flop", "turn", "river"],
+          "description": "Current street of action"
+        },
+        "cards": {
+          "type": "array",
+          "description": "Community cards (empty for preflop, 3 for flop, 4 for turn, 5 for river)",
+          "items": {
+            "type": "string",
+            "pattern": "^[AKQJT98765432][shdc]$",
+            "description": "Card in format: rank + suit (e.g., 'As' for Ace of spades)"
+          },
+          "minItems": 0,
+          "maxItems": 5
+        }
+      }
+    },
+    "hero": {
+      "type": "object",
+      "description": "Hero player information",
+      "required": ["position"],
+      "properties": {
+        "position": {
+          "type": "string",
+          "enum": ["UTG", "UTG+1", "UTG+2", "LJ", "HJ", "CO", "BTN", "SB", "BB"],
+          "description": "Hero's position at the table"
+        },
+        "holeCards": {
+          "type": "array",
+          "description": "Hero's hole cards (optional, may be hidden)",
+          "items": {
+            "type": "string",
+            "pattern": "^[AKQJT98765432][shdc]$"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "stack": {
+          "type": "number",
+          "description": "Hero's remaining stack in big blinds",
+          "minimum": 0
+        }
+      }
+    },
+    "villain": {
+      "type": "object",
+      "description": "Villain player information",
+      "required": ["position"],
+      "properties": {
+        "position": {
+          "type": "string",
+          "enum": ["UTG", "UTG+1", "UTG+2", "LJ", "HJ", "CO", "BTN", "SB", "BB"],
+          "description": "Villain's position at the table"
+        },
+        "stack": {
+          "type": "number",
+          "description": "Villain's remaining stack in big blinds",
+          "minimum": 0
+        }
+      }
+    },
+    "pot": {
+      "type": "object",
+      "description": "Pot and betting information",
+      "required": ["size"],
+      "properties": {
+        "size": {
+          "type": "number",
+          "description": "Current pot size in big blinds",
+          "minimum": 0
+        },
+        "currentBet": {
+          "type": "number",
+          "description": "Current bet to call in big blinds (0 if no bet)",
+          "minimum": 0,
+          "default": 0
+        }
+      }
+    },
+    "rangeMatrix": {
+      "type": "object",
+      "description": "13x13 matrix showing hand frequencies",
+      "required": ["displayFor", "matrix"],
+      "properties": {
+        "displayFor": {
+          "type": "string",
+          "enum": ["hero", "villain"],
+          "description": "Indicates whose range is being displayed"
+        },
+        "matrix": {
+          "type": "array",
+          "description": "13x13 matrix of hand frequencies (0-1). Row 0 = AA,AKs,AQs...A2s, Row 1 = AKo,KK,KQs...K2s, etc.",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "minItems": 13,
+            "maxItems": 13
+          },
+          "minItems": 13,
+          "maxItems": 13
+        },
+        "colorScheme": {
+          "type": "string",
+          "enum": ["default", "heatmap", "binary", "custom"],
+          "description": "Color scheme for visualizing frequencies",
+          "default": "default"
+        }
+      }
+    },
+    "actionHistory": {
+      "type": "array",
+      "description": "Optional sequence of actions leading to current state",
+      "items": {
+        "type": "object",
+        "required": ["street", "player", "action"],
+        "properties": {
+          "street": {
+            "type": "string",
+            "enum": ["preflop", "flop", "turn", "river"]
+          },
+          "player": {
+            "type": "string",
+            "enum": ["hero", "villain", "other"],
+            "description": "Player making the action"
+          },
+          "action": {
+            "type": "string",
+            "enum": ["fold", "check", "call", "bet", "raise", "allin"],
+            "description": "Action type"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Bet/raise amount in big blinds (required for bet/raise/allin)",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional metadata for the scenario",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title or description of the scenario"
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["beginner", "intermediate", "advanced"],
+          "description": "Difficulty level for educational content"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tags for categorizing scenarios (e.g., '3bet', 'cbet', 'bluff')"
+        }
+      }
+    }
+  }
+}
