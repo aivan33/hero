@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Poker Scenario Config Schema",
-  "description": "Schema for defining poker scenarios in educational content",
+  "description": "Schema for defining poker scenarios in educational content. All monetary values (pot size, bets, stacks, effectiveStack) are expressed in big blinds (BB), not chips.",
   "type": "object",
-  "required": ["board", "hero", "villain", "pot", "rangeMatrix"],
+  "required": ["board", "hero", "players", "pot", "rangeMatrix", "effectiveStack"],
   "properties": {
     "board": {
       "type": "object",
@@ -55,22 +55,36 @@
         }
       }
     },
-    "villain": {
-      "type": "object",
-      "description": "Villain player information",
-      "required": ["position"],
-      "properties": {
-        "position": {
-          "type": "string",
-          "enum": ["UTG", "UTG+1", "UTG+2", "LJ", "HJ", "CO", "BTN", "SB", "BB"],
-          "description": "Villain's position at the table"
-        },
-        "stack": {
-          "type": "number",
-          "description": "Villain's remaining stack in big blinds",
-          "minimum": 0
+    "players": {
+      "type": "array",
+      "description": "Array of opponent players (villains) in the hand",
+      "items": {
+        "type": "object",
+        "required": ["position"],
+        "properties": {
+          "position": {
+            "type": "string",
+            "enum": ["UTG", "UTG+1", "UTG+2", "LJ", "HJ", "CO", "BTN", "SB", "BB"],
+            "description": "Player's position at the table"
+          },
+          "stack": {
+            "type": "number",
+            "description": "Player's remaining stack in big blinds",
+            "minimum": 0
+          },
+          "label": {
+            "type": "string",
+            "description": "Optional identifier for this player (e.g., 'villain1', 'villain2', 'BB')",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          }
         }
-      }
+      },
+      "minItems": 1
+    },
+    "effectiveStack": {
+      "type": "number",
+      "description": "Effective stack size in big blinds - the minimum of hero's stack and all active players' stacks. Represents the maximum amount that can be won/lost in the hand.",
+      "minimum": 0
     },
     "pot": {
       "type": "object",
@@ -92,17 +106,43 @@
     },
     "rangeMatrix": {
       "type": "object",
-      "description": "13x13 matrix showing hand frequencies",
-      "required": ["displayFor", "matrix"],
+      "description": "13x13 matrix showing hand frequencies. Pairs are on the diagonal, suited combos above the diagonal, offsuit combos below the diagonal.",
+      "required": ["displayFor", "matrix", "matrixLabels"],
       "properties": {
         "displayFor": {
           "type": "string",
-          "enum": ["hero", "villain"],
-          "description": "Indicates whose range is being displayed"
+          "description": "Indicates whose range is being displayed (use player label from players array, or 'hero')"
+        },
+        "matrixLabels": {
+          "type": "object",
+          "description": "Explicit labels for rows and columns of the range matrix",
+          "required": ["rows", "columns"],
+          "properties": {
+            "rows": {
+              "type": "array",
+              "description": "Row labels ordered from top to bottom: A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, 2",
+              "items": {
+                "type": "string",
+                "enum": ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
+              },
+              "minItems": 13,
+              "maxItems": 13
+            },
+            "columns": {
+              "type": "array",
+              "description": "Column labels ordered from left to right: A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, 2",
+              "items": {
+                "type": "string",
+                "enum": ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
+              },
+              "minItems": 13,
+              "maxItems": 13
+            }
+          }
         },
         "matrix": {
           "type": "array",
-          "description": "13x13 matrix of hand frequencies (0-1). Row 0 = AA,AKs,AQs...A2s, Row 1 = AKo,KK,KQs...K2s, etc.",
+          "description": "13x13 matrix of hand frequencies (0-1). Matrix[i][j] where i=row, j=column. When i=j: pairs. When i<j: suited. When i>j: offsuit.",
           "items": {
             "type": "array",
             "items": {
